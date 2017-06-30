@@ -28,15 +28,15 @@ if (array_key_exists('sum', $opts)) {
     file_put_contents($log_path, $str);
 }
 
-print_r($sums);
+// print_r($sums);
 
 if (array_key_exists('cmp', $opts)) {
     $mems = scandir($mem_dir, SCANDIR_SORT_DESCENDING);
-    print_r($mems);
+    // print_r($mems);
     $sum_files = array_filter($mems, function ($file) {
         return preg_match('/^sum-.*/i', $file);
     });
-    print_r($sum_files);
+    // print_r($sum_files);
     if (sizeof($sum_files) < 2) {
         logg("Nothing to compare.\n");
     } else {
@@ -46,10 +46,10 @@ if (array_key_exists('cmp', $opts)) {
         $last = is_array($sums) ? $sums : read_sum($last_file);
         $prev = read_sum($prev_file);
 
-        echo "LAST\n";
-        print_r($last);
-        echo "PREV\n";
-        print_r($prev);
+        // echo "LAST\n";
+        // print_r($last);
+        // echo "PREV\n";
+        // print_r($prev);
 
         $files_removed = array_diff_key($prev, $last);
         $files_added = array_diff_key($last, $prev);
