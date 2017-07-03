@@ -24,13 +24,34 @@ function file_iterator($directory, $callback)
     }
 }
 
-function sum_dir($directory)
+function sum_dir($directory, $options = [])
 {
+    $exclude = is_array($options) && isset($options['exclude']) && !is_array($options['exclude'])
+        ? [$options['exclude']]
+        : $options['exclude'];
+    // print_r($exclude);
     $sums = [];
-    $itres = file_iterator($directory, function ($file, $info) use (&$sums) {
+    $count = 0;
+    $itres = file_iterator($directory, function ($file, $info) use (&$sums, $exclude, &$count) {
         // echo "$file\t$info\n";
-        $sums[$file] = md5_file($file);
+        if (++$count % 100 == 0) {
+            echo "Files checked: $count; $file\r";
+        }
+        $match_count = array_reduce($exclude, function ($match_count, $pattern) use ($file) {
+            if (fnmatch($pattern, $file)) {
+                $match_count++;
+            }
+            // print_r([$match_count, $pattern, $file]);
+            return $match_count;
+        }, 0);
+        if ($match_count == 0) {
+            $sums[$file] = md5_file($file);
+        }else{
+            echo "excluded, $file\n";
+        }
     });
+    echo "\n";
+    logg("Checked $count files.");
     if ($itres === false) {
         return false;
     }

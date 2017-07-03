@@ -8,21 +8,40 @@ $opts = getopt("", [
     "cmp"
     ]);
 
-// print_r($opts);
+if (sizeof($opts) == 0) {
+    echo "Options:\n";
+    $o = [
+        "--dir" => "Directory to work on. --dir=\"path\"",
+        "--sum" => "Create sum",
+        "--cmp" => "Compare sums",
+    ];
+    foreach ($o as $option => $description) {
+        echo "\t".str_pad($option, 20, " ")."\t".$description."\n";
+    }
+}
+
+print_r($opts);
 
 $dir = realpath($opts['dir']);
 if ($dir === false) {
     die("Invalid directory.");
 }
 
-$mem_dir = __DIR__.DIRECTORY_SEPARATOR."mem-".md5($dir);
+$name = md5($dir);
+$mem_dir = __DIR__.DIRECTORY_SEPARATOR."mem-".$name;
 if (!is_dir($mem_dir)) {
     mkdir($mem_dir);
 }
+$config_path = $mem_dir.DIRECTORY_SEPARATOR."conf.ini";
+if (!is_file($config_path)) {
+    touch($config_path);
+}
+$config = parse_ini_file($config_path);
+print_r($config);
 $date = date('Y-m-d-H-i-s');
 
 if (array_key_exists('sum', $opts)) {
-    $sums = sum_dir($dir);
+    $sums = sum_dir($dir, ['exclude'=>$config['exclude']]);
     $str = serialize($sums);
     $log_path = $mem_dir.DIRECTORY_SEPARATOR."sum-".$date;
     file_put_contents($log_path, $str);
