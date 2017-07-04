@@ -5,8 +5,13 @@ require_once(__DIR__.DIRECTORY_SEPARATOR.'functions.php');
 $opts = getopt("", [
     "dir::",
     "sum",
-    "cmp"
+    "cmp",
+    "dbg"
     ]);
+
+if (is_array($opts) && array_key_exists('dbg', $opts)) {
+    defined('DEBUG') || define('DEBUG', true);
+}
 
 if (sizeof($opts) == 0) {
     echo "Options:\n";
@@ -14,13 +19,14 @@ if (sizeof($opts) == 0) {
         "--dir" => "Directory to work on. --dir=\"path\"",
         "--sum" => "Create sum",
         "--cmp" => "Compare sums",
+        "--dbg" => "Prints out a debug log"
     ];
     foreach ($o as $option => $description) {
         echo "\t".str_pad($option, 20, " ")."\t".$description."\n";
     }
 }
 
-print_r($opts);
+is_debug() && print_r($opts);
 
 $dir = realpath($opts['dir']);
 if ($dir === false) {
@@ -37,7 +43,7 @@ if (!is_file($config_path)) {
     touch($config_path);
 }
 $config = parse_ini_file($config_path);
-print_r($config);
+is_debug() && print_r($config);
 $date = date('Y-m-d-H-i-s');
 
 if (array_key_exists('sum', $opts)) {

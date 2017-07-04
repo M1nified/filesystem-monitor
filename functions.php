@@ -29,12 +29,15 @@ function sum_dir($directory, $options = [])
     $exclude = is_array($options) && isset($options['exclude']) && !is_array($options['exclude'])
         ? [$options['exclude']]
         : $options['exclude'];
+    if ($exclude == null) {
+        $exclude = [];
+    }
     // print_r($exclude);
     $sums = [];
     $count = 0;
     $itres = file_iterator($directory, function ($file, $info) use (&$sums, $exclude, &$count) {
         // echo "$file\t$info\n";
-        if (++$count % 100 == 0) {
+        if (is_debug() && ++$count % 100 == 0) {
             echo "Files checked: $count; $file\r";
         }
         $match_count = array_reduce($exclude, function ($match_count, $pattern) use ($file) {
@@ -46,11 +49,11 @@ function sum_dir($directory, $options = [])
         }, 0);
         if ($match_count == 0) {
             $sums[$file] = md5_file($file);
-        }else{
-            echo "excluded, $file\n";
+        } else {
+            is_debug() && print("excluded, $file\n");
         }
     });
-    echo "\n";
+    is_debug() && print("\n");
     logg("Checked $count files.");
     if ($itres === false) {
         return false;
@@ -81,4 +84,9 @@ function logg($message = "")
 function logg_h1($message = "")
 {
     logg(str_pad(" $message ", 60, "=", STR_PAD_BOTH));
+}
+
+function is_debug()
+{
+    return defined('DEBUG') && DEBUG === true;
 }
