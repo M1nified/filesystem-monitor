@@ -37,7 +37,8 @@ function sum_dir($directory, $options = [])
     $count = 0;
     $itres = file_iterator($directory, function ($file, $info) use (&$sums, $exclude, &$count) {
         // echo "$file\t$info\n";
-        if (is_debug() && ++$count % 100 == 0) {
+        $count++;
+        if (is_debug() && $count % 100 == 0) {
             echo "Files checked: $count; $file\r";
         }
         $match_count = array_reduce($exclude, function ($match_count, $pattern) use ($file) {
