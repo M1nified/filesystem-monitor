@@ -44,6 +44,12 @@ if (!is_file($config_path)) {
 }
 $config = parse_ini_file($config_path);
 is_debug() && print_r($config);
+if (is_array($config['exclude'])) {
+    logg_h1("excluded wildcards");
+    foreach ($config['exclude'] as $excluded_wc) {
+        logg($excluded_wc);
+    }
+}
 $date = date('Y-m-d-H-i-s');
 
 if (array_key_exists('sum', $opts)) {
