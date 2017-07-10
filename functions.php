@@ -75,19 +75,56 @@ function read_sum($file)
 
 // Helpers
 
-function logg($message = "")
+abstract class LoggDestination
+{
+    const LOGG_DST_FILE     = 0b0000001;
+    const LOGG_DST_ECHO     = 0b0000010;
+    const LOGG_DST_EMAIL    = 0b0000100;
+    const LOGG_DST_ALL      = 0b0000111;
+}
+
+function logg($message = "", $logg_dst = LoggDestination::LOGG_DST_ECHO)
 {
     $timestamp = date('Y-m-d H:i:s');
     $message = rtrim($message);
     $log = "[{$timestamp}]\t$message";
-    print("$log\n");
+    if (($logg_dst & LoggDestination::LOGG_DST_ECHO) == LoggDestination::LOGG_DST_ECHO) {
+        print("$log\n");
+    }
+    if (($logg_dst & LoggDestination::LOGG_DST_EMAIL) == LoggDestination::LOGG_DST_EMAIL) {
+        global $LOGG_DST_EMAIL_CONTENT;
+        $LOGG_DST_EMAIL_CONTENT .= "$log\n";
+    }
+    if (($logg_dst & LoggDestination::LOGG_DST_FILE) == LoggDestination::LOGG_DST_FILE) {
+        global $LOGG_DST_FILE_PATH;
+        $logg_file =
+            isset($LOGG_DST_FILE_PATH) && !empty($LOGG_DST_FILE_PATH)
+            ? $LOGG_DST_FILE_PATH
+            : __DIR__.DIRECTORY_SEPARATOR."logg-".date('Y-m-d-H-i-s');
+        error_log("$log\n", 3, $logg_file);
+    }
 }
-function logg_h1($message = "")
+function logg_h1($message = "", $logg_dst = LoggDestination::LOGG_DST_ECHO)
 {
-    logg(str_pad(" $message ", 60, "=", STR_PAD_BOTH));
+    logg(str_pad(" $message ", 60, "=", STR_PAD_BOTH), $logg_dst);
 }
 
 function is_debug()
 {
     return defined('DEBUG') && DEBUG === true;
+}
+
+// send it ;)
+
+function send_email($to, $subject)
+{
+    global $LOGG_DST_EMAIL_CONTENT;
+    if (is_array($to)) {
+        $to = implode(', ', $to);
+    }
+    if (mail($to, $subject, $LOGG_DST_EMAIL_CONTENT)) {
+        logg("Email sent successfully.", LoggDestination::LOGG_DST_ECHO | LoggDestination::LOGG_DST_FILE);
+    } else {
+        logg("Failed to send an email.", LoggDestination::LOGG_DST_ECHO | LoggDestination::LOGG_DST_FILE);
+    }
 }
