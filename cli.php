@@ -119,7 +119,7 @@ if (array_key_exists('cmp', $opts)) {
     }
 }
 
-logg_h1("end");
+logg_h1("end", LoggDestination::LOGG_DST_ALL);
 
 if ($will_email && sizeof($opts['mail-to'])>0) {
     $to = explode(",", $opts['mail-to']);
