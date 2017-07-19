@@ -151,9 +151,9 @@ if (array_key_exists('cmp', $opts)) {
         }
 
         logg_h1("File 1:", LoggDestination::LOGG_DST_ALL);
-        logg(basename($prev_file));
+        logg(basename($prev_file), LoggDestination::LOGG_DST_ALL);
         logg_h1("File 2:", LoggDestination::LOGG_DST_ALL);
-        logg(basename($last_file));
+        logg(basename($last_file), LoggDestination::LOGG_DST_ALL);
 
         $last = is_array($sums) ? $sums : read_sum($last_file);
         $prev = read_sum($prev_file);
