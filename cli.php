@@ -41,8 +41,10 @@ $name = md5($dir);
 $mem_dir = __DIR__.DIRECTORY_SEPARATOR."mem-".$name;
 
 $date = date('Y-m-d-H-i-s');
+$hash = str_shuffle('bestcompanyever');
+$fname = "$date-$hash";
 global $LOGG_DST_FILE_PATH;
-$LOGG_DST_FILE_PATH = $mem_dir.DIRECTORY_SEPARATOR."logg-$date";
+$LOGG_DST_FILE_PATH = $mem_dir.DIRECTORY_SEPARATOR."logg-$fname";
 
 
 if (!is_dir($mem_dir)) {
@@ -51,6 +53,15 @@ if (!is_dir($mem_dir)) {
 $config_path = $mem_dir.DIRECTORY_SEPARATOR."conf.ini";
 if (!is_file($config_path)) {
     touch($config_path);
+    $config_ini_str = implode("\n", [
+        "# This is configuration file for:",
+        "# $dir",
+        null,
+        "# Exclude directories using wildcards:",
+        "# exclude[]=\"*/.git/*\"",
+        null,
+    ]);
+    file_put_contents($config_path, $config_ini_str);
 }
 $config = parse_ini_file($config_path);
 is_debug() && print_r($config);
@@ -69,7 +80,7 @@ if (is_array($config['exclude'])) {
 if (array_key_exists('sum', $opts)) {
     $sums = sum_dir($dir, ['exclude'=>$config['exclude']]);
     $str = serialize($sums);
-    $log_path = $mem_dir.DIRECTORY_SEPARATOR."sum-".$date;
+    $log_path = $mem_dir.DIRECTORY_SEPARATOR."sum-$fname";
     file_put_contents($log_path, $str);
 }
 
@@ -85,22 +96,21 @@ if (array_key_exists('cmp', $opts)) {
     if (sizeof($sum_files) < 2) {
         logg("Nothing to compare.\n", LoggDestination::LOGG_DST_ALL);
     } else {
-        $will_email = true;
-
         $last_file = $mem_dir.DIRECTORY_SEPARATOR.$sum_files[0];
         $prev_file = $mem_dir.DIRECTORY_SEPARATOR.$sum_files[1];
 
         $last = is_array($sums) ? $sums : read_sum($last_file);
         $prev = read_sum($prev_file);
 
-        // echo "LAST\n";
-        // print_r($last);
-        // echo "PREV\n";
-        // print_r($prev);
+        // echo "LAST\n";print_r($last);echo "PREV\n";print_r($prev);
 
         $files_removed = array_diff_key($prev, $last);
         $files_added = array_diff_key($last, $prev);
-        $file_modified = array_diff($last, $prev);
+        $files_modified = array_diff($last, $prev);
+
+        if (max(sizeof($files_removed), sizeof($files_added), sizeof($files_modified)) > 0) {
+            $will_email = true;
+        }
 
         logg_h1("files removed (".sizeof($files_removed).")", LoggDestination::LOGG_DST_ALL);
         foreach ($files_removed as $file => $md5sum) {
@@ -112,14 +122,16 @@ if (array_key_exists('cmp', $opts)) {
             logg($file, LoggDestination::LOGG_DST_FILE | LoggDestination::LOGG_DST_EMAIL);
         }
 
-        logg_h1("files modified (".sizeof($file_modified).")", LoggDestination::LOGG_DST_ALL);
-        foreach ($file_modified as $file => $md5sum) {
+        logg_h1("files modified (".sizeof($files_modified).")", LoggDestination::LOGG_DST_ALL);
+        foreach ($files_modified as $file => $md5sum) {
             logg($file, LoggDestination::LOGG_DST_FILE | LoggDestination::LOGG_DST_EMAIL);
         }
     }
 }
 
-logg_h1("end", LoggDestination::LOGG_DST_ALL);
+if (sizeof($opts)>0) {
+    logg_h1("end", LoggDestination::LOGG_DST_ALL);
+}
 
 if ($will_email && sizeof($opts['mail-to'])>0) {
     $to = explode(",", $opts['mail-to']);
